@@ -1,0 +1,31 @@
+name: Deploy EC2 via SSH
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-ec2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v3
+
+      - name: Crear archivo PEM desde secreto
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > mi-llave-ec2-grupo-final.pem
+          chmod 400 mi-llave-ec2-grupo-final.pem
+
+      - name: Copiar main.py a EC2 por SCP
+        run: |
+          scp -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem main.py ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:/home/ubuntu/main.py
+
+      - name: Ejecutar main.py y guardar log
+        run: |
+          ssh -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com << 'EOF'
+            sudo apt update && sudo apt install -y python3-pip awscli
+            pip3 install boto3
+            python3 main.py > output.log 2>&1
+            aws s3 cp output.log s3://s3-data-salida-covid-brayner573/logs/output-$(date +%Y%m%d-%H%M%S).log
+EOF
