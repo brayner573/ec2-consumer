@@ -1,45 +1,24 @@
 import boto3
-import json
-from datetime import datetime
-s3 = boto3.client('s3')
-bucket_name = 's3-data-salida-covid-brayner573'
-local_file = 'data_transformada.json'
-s3_key = 'data_transformada.json'
-
-s3.upload_file(local_file, bucket_name, s3_key)
-print(f"{local_file} subido a {bucket_name}/{s3_key}")
-
-# Configura los valores del bucket
-bucket_name = 's3-data-salida-covid-brayner573'
-input_key = 'data_transformada.json'
-log_key = f'logs/resumen-{datetime.utcnow().strftime("%Y%m%d-%H%M%S")}.json'
+import botocore
+import os
 
 def main():
     s3 = boto3.client('s3')
+    bucket_name = 's3-data-salida-covid-brayner573'
+    s3_key = 'data_transformada.json'
+    local_file = 'data_transformada.json'
 
-    # Leer archivo JSON de entrada
-    response = s3.get_object(Bucket=bucket_name, Key=input_key)
-    content = response['Body'].read().decode('utf-8')
-    data = json.loads(content)
-    
-    total_registros = len(data)
-
-    print(f"Registros procesados: {total_registros}")
-
-    # Crear resumen y guardarlo como log
-    resumen = {
-        "archivo_procesado": input_key,
-        "registros": total_registros,
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-    s3.put_object(
-        Bucket=bucket_name,
-        Key=log_key,
-        Body=json.dumps(resumen).encode('utf-8')
-    )
-
-    print(f"Resumen guardado en: {log_key}")
+    try:
+        # Verificar si el archivo ya existe en el bucket
+        s3.head_object(Bucket=bucket_name, Key=s3_key)
+        print(f"🟡 El archivo '{s3_key}' ya existe en S3. No se subirá de nuevo.")
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            print(f"🔵 El archivo no existe en S3. Subiendo...")
+            s3.upload_file(local_file, bucket_name, s3_key)
+            print(f"✅ Archivo '{s3_key}' subido exitosamente.")
+        else:
+            raise
 
 if __name__ == "__main__":
     main()

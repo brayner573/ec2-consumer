@@ -1,4 +1,4 @@
-name: Deploy EC2 y subir a S3
+name: Deploy EC2 Consumer
 
 on:
   push:
@@ -10,39 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout del repositorio
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Crear archivo PEM desde secreto
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > mi-llave-ec2-grupo-final.pem
-          chmod 400 mi-llave-ec2-grupo-final.pem
+      - name: Configurar permisos al .pem
+        run: chmod 600 mi-llave-ec2-grupo-final.pem
 
-      - name: Copiar script a EC2
-        run: |
-          scp -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem main.py ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:/home/ubuntu/
-
-      - name: Ejecutar script en EC2
+      - name: Crear archivo JSON si no existe y ejecutar main.py
         run: |
           ssh -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com << 'EOF'
-            sudo apt update -y
-            sudo apt install -y python3-pip
-            pip3 install boto3 --user
-            python3 /home/ubuntu/main.py
+            cd /home/ubuntu
+
+            echo "🔍 Verificando si existe data_transformada.json..."
+            if [ ! -f "data_transformada.json" ]; then
+              echo '[{"mensaje":"datos de prueba para testear la carga a S3"}]' > data_transformada.json
+              echo "Archivo de prueba creado"
+            else
+              echo "El archivo ya existe"
+            fi
+
+            echo "Ejecutando script principal"
+            python3 main.py
           EOF
-
-      - name: Copiar resultado de EC2 a Actions
-        run: |
-          scp -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:/home/ubuntu/data_transformada.json .
-
-      - name: Subir archivo a S3
-        uses: jakejarvis/s3-sync-action@master
-        with:
-          args: --exact-timestamps --delete
-        env:
-          AWS_S3_BUCKET: s3-data-salida-covid-brayner573
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
-          SOURCE_DIR: .  # sube desde la raíz del repo
-          
