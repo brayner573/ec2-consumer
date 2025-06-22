@@ -10,7 +10,7 @@ def main():
     content = response['Body'].read().decode('utf-8')
     data = json.loads(content)
 
-    # Aquí puedes aplicar lógica sobre los datos
+    
     print("Total de registros procesados:", len(data))
 
 if __name__ == "__main__":
