@@ -14,7 +14,7 @@ jobs:
 
       - name: Crear archivo PEM desde secreto
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > mi-llave-ec2-grupo-final.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > mi-llave-ec2-grupo-final.pem
           chmod 400 mi-llave-ec2-grupo-final.pem
 
       - name: Copiar main.py a EC2 por SCP
@@ -24,7 +24,7 @@ jobs:
       - name: Ejecutar main.py en EC2 por SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com << 'EOF'
-            sudo apt update && sudo apt install -y python3-pip
-            pip3 install boto3
-            python3 main.py
+          sudo apt update && sudo apt install -y python3-pip
+          pip3 install boto3
+          python3 main.py
           EOF
