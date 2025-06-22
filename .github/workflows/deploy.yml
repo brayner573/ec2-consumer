@@ -45,4 +45,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1
           SOURCE_DIR: .  # sube desde la raíz del repo
-          DESTINATION_DIR: data_transformada.json  # sube solo el archivo data_transformada.json
+          
