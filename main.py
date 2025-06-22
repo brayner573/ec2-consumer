@@ -1,6 +1,13 @@
 import boto3
 import json
 from datetime import datetime
+s3 = boto3.client('s3')
+bucket_name = 's3-data-salida-covid-brayner573'
+local_file = 'data_transformada.json'
+s3_key = 'data_transformada.json'
+
+s3.upload_file(local_file, bucket_name, s3_key)
+print(f"{local_file} subido a {bucket_name}/{s3_key}")
 
 # Configura los valores del bucket
 bucket_name = 's3-data-salida-covid-brayner573'
