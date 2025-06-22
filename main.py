@@ -9,8 +9,6 @@ def main():
     response = s3.get_object(Bucket=bucket_name, Key=json_key)
     content = response['Body'].read().decode('utf-8')
     data = json.loads(content)
-
-    
     print("Total de registros procesados:", len(data))
 
 if __name__ == "__main__":
