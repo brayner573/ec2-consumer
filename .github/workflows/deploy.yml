@@ -15,7 +15,7 @@ jobs:
 
       - name: Crear archivo PEM desde secreto
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > mi-llave-ec2-grupo-final.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > mi-llave-ec2-grupo-final.pem
           chmod 400 mi-llave-ec2-grupo-final.pem
 
       - name: Copiar script a EC2
