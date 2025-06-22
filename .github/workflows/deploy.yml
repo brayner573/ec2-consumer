@@ -1,4 +1,4 @@
-name: Deploy EC2 via SSH
+name: Deploy EC2 y subir a S3
 
 on:
   push:
@@ -6,41 +6,43 @@ on:
       - main
 
 jobs:
-  deploy-ec2:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Clonar repositorio
+      - name: Checkout del repositorio
         uses: actions/checkout@v3
 
       - name: Crear archivo PEM desde secreto
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > mi-llave-ec2-grupo-final.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" > mi-llave-ec2-grupo-final.pem
           chmod 400 mi-llave-ec2-grupo-final.pem
 
-      - name: Copiar main.py a EC2 por SCP
+      - name: Copiar script a EC2
         run: |
-          scp -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem main.py ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:~/
+          scp -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem main.py ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:/home/ubuntu/
 
-      - name: Ejecutar main.py en EC2 por SSH
+      - name: Ejecutar script en EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com << 'EOF'
-          sudo apt update && sudo apt install -y python3-pip
-          pip3 install boto3
-          python3 main.py
+            sudo apt update -y
+            sudo apt install -y python3-pip
+            pip3 install boto3 --user
+            python3 /home/ubuntu/main.py
           EOF
-      - name: Upload output JSON to S3
+
+      - name: Copiar resultado de EC2 a Actions
         run: |
-          echo "$EC2_SSH_KEY" > key.pem
-          chmod 400 key.pem
-          scp -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:/home/ubuntu/data_transformada.json .
-    
-      - name: Upload to S3
-        uses: jakejarvis/s3-sync-action@v0.5.1
+          scp -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:/home/ubuntu/data_transformada.json .
+
+      - name: Subir archivo a S3
+        uses: jakejarvis/s3-sync-action@master
         with:
-          args: --acl private --follow-symlinks
+          args: --exact-timestamps --delete
         env:
           AWS_S3_BUCKET: s3-data-salida-covid-brayner573
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1
-          SOURCE_DIR: '.'
+          SOURCE_DIR: .  # sube desde la raíz del repo
+          DESTINATION_DIR: data_transformada.json  # sube solo el archivo data_transformada.json
