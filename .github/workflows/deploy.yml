@@ -1,9 +1,8 @@
-name: Deploy to EC2 via SSH
+name: Deploy EC2 Script
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   deploy-ec2:
@@ -13,18 +12,20 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Decode and save EC2 private key
+      - name: Configurar archivo PEM
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > mi-llave-ec2-grupo-final.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" > mi-llave-ec2-grupo-final.pem
           chmod 600 mi-llave-ec2-grupo-final.pem
 
-      - name: Upload main.py to EC2
+      - name: Enviar main.py a EC2
         run: |
           scp -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem main.py ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com:/home/ubuntu/
 
-      - name: Run main.py on EC2
+      - name: Ejecutar main.py en EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i mi-llave-ec2-grupo-final.pem ubuntu@ec2-3-85-128-40.compute-1.amazonaws.com << 'EOF'
+            sudo apt update -y
+            sudo apt install -y python3-pip
             pip3 install --user boto3
             python3 /home/ubuntu/main.py
           EOF
