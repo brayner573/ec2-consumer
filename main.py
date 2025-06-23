@@ -8,14 +8,13 @@ def main():
     local_file = 'data_transformada.json'
     s3_key = 'data_transformada.json'
 
-    # Verificar si ya existe
     try:
         s3.head_object(Bucket=bucket_name, Key=s3_key)
-        print("🟢 El archivo ya existe en S3. No se subirá de nuevo.")
+        print("El archivo ya existe en S3. No se subirá de nuevo.")
     except:
-        print("🔵 El archivo no existe en S3. Subiendo...")
+        print("El archivo no existe en S3. Subiendo...")
         s3.upload_file(local_file, bucket_name, s3_key)
-        print("✅ Subido correctamente.")
+        print("Subido correctamente.")
 
 if __name__ == '__main__':
     main()
