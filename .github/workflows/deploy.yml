@@ -28,4 +28,6 @@ jobs:
             sudo apt install -y python3-pip
             pip3 install --user boto3
             python3 /home/ubuntu/main.py
+            cd /home/ubuntu
+            python3 main.py
           EOF
