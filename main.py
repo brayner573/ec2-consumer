@@ -1,5 +1,7 @@
 # Importa el módulo boto3, que es el SDK de AWS para Python.
 # Permite interactuar con servicios como S3, Lambda y EC2.
+# Importa el módulo boto3, que es el SDK de AWS para Python.
+# Permite interactuar con servicios como S3, Lambda y EC2.
 import boto3
 import os
 
